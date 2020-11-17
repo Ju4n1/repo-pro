@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "lista.h"
 #include "mapeo.h"
 
@@ -10,7 +11,6 @@ int (*funcion_comp)(tClave c1,tClave c2);
 
 void (*fEliminarClave)(void *);
 void (*fEliminarValor)(void *);
-
 
 /**
 Defino una función eliminar en base a fEliminarClave y fEliminarValor de para ultilizar
@@ -22,6 +22,10 @@ void EliminarEntrada(tElemento e1){
      fEliminarValor(entrada->valor);
      entrada = NULL;
      free(entrada);}
+
+void fNoEliminar(tElemento e){}
+
+
 
 //------------------------------------------------------------------------------------------------
 
@@ -68,6 +72,34 @@ void crear_mapeo(tMapeo * m, int ci, int (*fHash)(void *), int (*fComparacion)(v
 **/
 void rehash(tMapeo m){
 
+m->longitud_tabla *=2; //duplico el tamaño de la tabla
+tLista * tabla_anterior = m->tabla_hash;
+
+tLista * nuevaTabla=(tLista *) malloc(sizeof(tLista)*(m->longitud_tabla)); //creo una tabla nueva
+
+ for(int i=0;i<m->longitud_tabla;i++)
+       crear_lista(&(m->tabla_hash[i])); //genero cada una de las fila vacias de la tabla
+
+
+ tLista lista_actual=NULL;
+
+ for (int i = 0; i<m->longitud_tabla/2; i++){
+          lista_actual = tabla_anterior[i];
+
+          int longitud_lista = l_longitud(lista_actual);
+          for(int j=0; j<longitud_lista;j++){
+
+                  //recorro lista recuperando entrada y eliminando de la tabla anterior pero sin borrar elemento
+                  tPosicion mi_posicion_actual = l_primera(lista_actual);
+                  tEntrada mi_entrada_actual = l_recuperar(lista_actual, mi_posicion_actual);
+                  l_eliminar(lista_actual, mi_posicion_actual, &fNoEliminar);//elimino la posicion pero mantengo la entrada
+
+                  //recalculo hash e inserto en nueva tabla
+                  int h=fabs((m)->hash_code(mi_entrada_actual->clave));
+                  l_insertar(nuevaTabla[h],l_primera(nuevaTabla[h]),mi_entrada_actual);
+
+                                            }
+                                             }
 
 }
 
