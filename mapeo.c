@@ -32,16 +32,19 @@ void crear_mapeo(tMapeo * m, int ci, int (*fHash)(void *), int (*fComparacion)(v
         tLista* lista=NULL;
 
 
+        if(ci<10)
+            ci=10;
+
+
         //reservo memporia del mapeo
         * m=(tMapeo)malloc(sizeof(struct mapeo));
+        (*m)->tabla_hash=(tLista *) malloc(ci * sizeof(tLista));
+
         if(m==NULL)
             exit (MAP_ERROR_MEMORIA);
 
 
-        if (ci<10)
-            ci=10;
-
-        //asigno parametros iniciales del mapeo vacio
+         //asigno parametros iniciales del mapeo vacio
         (*m)->cantidad_elementos=0;
         (*m)->tabla_hash=lista;
         (*m)->longitud_tabla=0;
@@ -51,8 +54,7 @@ void crear_mapeo(tMapeo * m, int ci, int (*fHash)(void *), int (*fComparacion)(v
         funcion_comp=fComparacion;
 
 
-        if (ci<10)
-           ci=10;//la cantidad inicial será como mínimo de 10 filas
+
 
         for(int i=0; i<ci; i++) //crea un lista "filas" como capacidad máxima de la  tabla hash "arreglo"
            crear_lista(&(*m)->tabla_hash[i]);
