@@ -9,9 +9,13 @@
  Una referencia a la lista creada es referenciada en *L.
 **/
 void crear_lista(tLista * l) {
-    (*l) = (tLista) malloc(sizeof(struct celda));
-    if ((*l) == NULL)
+
+    (*l) = (tLista) malloc(sizeof(struct celda));// reservo la memoria para l
+
+    if ((*l) == NULL) //chequeo que la operación anterior haya sido exitosa
         exit(LST_ERROR_MEMORIA);
+
+     // lista vacía
     (*l)->elemento = NULL;
     (*l)->siguiente = NULL;
 }
@@ -23,15 +27,15 @@ void crear_lista(tLista * l) {
 **/
 void l_insertar(tLista l, tPosicion p, tElemento e) {
 
-	if (p==NULL)//verifico que sea un posición válida
+	if (p==NULL) //verifico que tanto la posición como la lista sean válidas, obs se asume que la lista si va a ser válida
         exit(LST_POSICION_INVALIDA);
 
-    tPosicion posNuevaCelda = (tPosicion) malloc(sizeof(struct celda));//reservo memoria
+    tPosicion posNuevaCelda = (tPosicion) malloc(sizeof(struct celda)); //reservo memoria
 
 	if (posNuevaCelda == NULL)//verifico que se haya creado bien
         exit(LST_ERROR_MEMORIA);
 
-	//seto los parametros, la referencia al siguiente y del anterior a el
+	//seteo todos los parámetros de la nueva posicion incluyendo referencias al siguiente y del anterior a el
     posNuevaCelda->elemento = e;
     posNuevaCelda->siguiente = p->siguiente;
     p->siguiente = posNuevaCelda;
@@ -44,34 +48,49 @@ void l_insertar(tLista l, tPosicion p, tElemento e) {
 **/
 void l_eliminar(tLista l, tPosicion p, void (*fEliminar)(tElemento)) {
 
-    //Checkeo pos a eliminar
-    if(p==NULL || p == l_fin(l))
-        exit(LST_POSICION_INVALIDA);
+    //Chequeo pos a eliminar sea válida
+    if(p->siguiente==NULL)
+          exit(LST_POSICION_INVALIDA);
 
-    tPosicion aux;
-    aux = p->siguiente;
-    p->siguiente = aux->siguiente;
+
+    tPosicion aux= p->siguiente; //variable auxiliar para guardar pos a eliminar
+
+    p->siguiente = aux->siguiente; //actualizo el puntero anterior para que apunte al nuevo siguiente
+
+    fEliminar(aux->elemento); //uso la función por parámetero para eliminnar el elemento al que apunta p
+
+    //eliminos punteros
+    aux->elemento=NULL;
     aux->siguiente = NULL;
-    fEliminar(aux->elemento);  //borro el elemento usando la funcion por parametro
-    free(aux);
+
+
+    free(aux);// libero el espacio que ocupa la posición eliminada
 }
 
 /**
  Destruye la lista L, elimininando cada una de sus posiciones. Los elementos almacenados en las posiciones son eliminados mediante la función fEliminar parametrizada.
 **/
 void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
-    tPosicion pos = *l;
-    tPosicion aux = pos;
+
+    //Me paro en la primer posicion con elemento
+    tPosicion pos = (*l)->siguiente;
+    tPosicion aux=pos;
+
+	//recorro la listas mientras tenga elementos
+    while(pos!= NULL){
+
+         //elimino elemento y punteros de pos
+         fEliminar(pos->elemento);
+         pos->elemento=NULL;
+         pos->siguiente=NULL;
+
+         //Uso aux para avanzar una posicion en la lista y para liberar el espacio que ocupaba la posicion que acabamos de eliminar
+         pos=aux->siguiente;
+         free(aux);}
 
 
-	//recorre la lista eliminando posición por posicion y tambien el contenido de las misma
-    while(pos->siguiente!= NULL){
-        aux = aux->siguiente;
-        fEliminar(pos->elemento);
-        free(pos);
-        pos = aux;
-    }
-    *l = NULL;
+free(*l); //libero es espacio que ocupa el puntero a lista
+*l = NULL; //elimino el puntero a lista
 }
 
 /**
@@ -79,19 +98,20 @@ void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
  Si P es fin(L), finaliza indicando LST_POSICION_INVALIDA.
 **/
 tElemento l_recuperar(tLista l, tPosicion p) {
-    if(p==NULL || p == l_fin(l))
-        exit(LST_POSICION_INVALIDA);
-    //elemento apuntado por P es siguiente de P
-    return (p->siguiente)->elemento;
-}
+
+      if(p==NULL || p == l_fin(l))// chequeo que la posicion sea válida, y controlo que esta no sea fin
+          exit(LST_POSICION_INVALIDA);
+
+//retorno elemento apuntado por p
+return (p->siguiente)->elemento;}
 
 /**
  Recupera y retorna la primera posición de L.
  Si L es vacía, primera(L) = ultima(L) = fin(L).
 **/
 tPosicion l_primera(tLista l){
-    return l;
-}
+//primera retorna el centinela
+return l;}
 
 /**
  Recupera y retorna la posición siguiente a P en L.
@@ -99,15 +119,11 @@ tPosicion l_primera(tLista l){
 **/
 tPosicion l_siguiente(tLista l, tPosicion p) {
 
-    //chequeo que la posicion sean válida
-    if(p==NULL)
-        exit(LST_POSICION_INVALIDA);
 
-    //no podes pedir siguiente a a fin
-    if(p==l_fin(l))
+    if(p==l_fin(l))// no se puede solicitar siguiente a fin, se asume que esta vez la posición pasada es válida para la lista
         exit(LST_NO_EXISTE_SIGUIENTE);
 
-    return p->siguiente;}
+return p->siguiente;}
 
 /**
  Recupera y retorna la posición anterior a P en L.
@@ -115,14 +131,12 @@ tPosicion l_siguiente(tLista l, tPosicion p) {
 **/
 tPosicion l_anterior(tLista l, tPosicion p) {
 
-    if(p==NULL)
-        exit(LST_POSICION_INVALIDA);
-
-    if(p==l_primera(l))
+    if(p==l_primera(l))//no existe una posición anterior a primera, se asume que la posicion pasada es válida
         exit(LST_NO_EXISTE_ANTERIOR);
 
     tPosicion pos = l;
 
+    // cuando el siguiente de pos coincide con p significa que estoy parado en el anterior a p, de los contrario debo seguir avanzando.
     while(pos->siguiente != p)
          pos = pos->siguiente;
 
@@ -133,10 +147,11 @@ return pos;}
  Si L es vacía, primera(L) = ultima(L) = fin(L).
 **/
 tPosicion l_ultima(tLista l) {
+
     tPosicion pos = l;
+    if(l->siguiente!=NULL)//la lista esta vacía, primera = ultima = fin
 
-    if(l->siguiente!=NULL)//la lista esta vacia, primera = ultima = fin
-
+        //crecorro hasta estar parado en la posición que apunta a fin, es decir cuando el siguiente del siguiente de pos, sea nulo
         while(((pos->siguiente)->siguiente) != NULL)
               pos = pos->siguiente;
 
@@ -148,10 +163,10 @@ tPosicion l_ultima(tLista l) {
  Si L es vacía, primera(L) = ultima(L) = fin(L).
 **/
 tPosicion l_fin(tLista l) {
-      tPosicion pos = l;
 
-      while(pos->siguiente!=NULL)
-            pos = pos->siguiente;//recorro las poasdiciones te tienen un elemento
+      tPosicion pos = l; //pos es primera.
+      while(pos->siguiente!=NULL) //cuando el siguiente de pos es un nulo, esta coincide con fin
+            pos = pos->siguiente;
 
 return pos;}
 
@@ -160,15 +175,16 @@ return pos;}
 **/
 int l_longitud(tLista l) {
 
-    int contador = 0;
+    int contador = 0; // inicialmente la lista se encuentra vacia
 
-    if(l_primera(l) != l_fin(l)) //si no tiene elementos
+    if(l_primera(l) != l_fin(l)) //si la lista tiene elementos los cuento
 
-       {tPosicion pos = l->siguiente;
+       {
+        tPosicion pos = l->siguiente;
         while(pos != NULL){
             pos = pos->siguiente;
             contador++;}
-            }
+        }
 return contador;}
 
 
