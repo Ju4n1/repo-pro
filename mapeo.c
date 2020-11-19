@@ -226,7 +226,14 @@ void m_destruir(tMapeo *m, void (*fEliminarC)(void *), void (*fEliminarV)(void *
         l_destruir(&bucket, &fEliminarEntrada);} //destruyo una a una las filas de la tabla
 
     free(((*m)->tabla_hash));//libero la memoria donde se amlacena la tabla
-    (*m)->tabla_hash = NULL;//elimino el puntero a tabla
+
+    //Elimino todos los punteros
+    (*m)->tabla_hash = NULL;
+    (*m)->hash_code=NULL;
+    (*m)->comparador=NULL;
+    (*m)->longitud_tabla=NULL;
+    (*m)->cantidad_elementos=NULL;
+
     free(*m);//libero memoria que ocupa mapeo
     *m = NULL;//elimuno el puntero a mapeo
 }
