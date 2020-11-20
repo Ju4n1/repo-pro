@@ -70,6 +70,8 @@ void l_eliminar(tLista l, tPosicion p, void (*fEliminar)(tElemento)) {
 /**
  Destruye la lista L, elimininando cada una de sus posiciones. Los elementos almacenados en las posiciones son eliminados mediante la función fEliminar parametrizada.
 **/
+
+
 void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
 
     //Me paro en la posicion que deberia tener elementos en caso de tener
@@ -78,24 +80,27 @@ void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
 
 	//recorro la listas mientras tenga elementos
     while(pos!= NULL){
-         
-		 aux=pos->siguiente;//salvo siguiete para la proxima vuelta del ciclo
-         
-		 //elimino elemento en posicion con la función pasada por parámetros, y hago que sus punteros no apunten a nada
+
+		 aux=pos;//salvo siguiete para la proxima vuelta del ciclo
+         //elimino elemento en posicion con la función pasada por parámetros, y hago que sus punteros no apunten a nada
          fEliminar(pos->elemento);
-         pos->elemento=NULL;
-         pos->siguiente=NULL;
-         
-		 free(pos);//lebero la memoria que ocupa pos
-         
-		 
-         pos=aux;//actualizo el valor de posicion al siguiente
+
+         pos=aux->siguiente;
+
+         aux->elemento=NULL;
+         aux->siguiente=NULL;
+
+		 free(aux);//lebero la memoria que ocupa pos
+
+
+
          }
 
 
 free(*l); //libero es espacio que ocupa el puntero a lista
 *l = NULL; //elimino el puntero a lista
 }
+
 
 /**
  Recupera y retorna el elemento en la posición P.
@@ -124,7 +129,7 @@ return l;}
 tPosicion l_siguiente(tLista l, tPosicion p) {
 
 
-    if(p->siguiente==NULL) //esto se cumple cuando p es fin 
+    if(p->siguiente==NULL) //esto se cumple cuando p es fin
         exit(LST_NO_EXISTE_SIGUIENTE);
 
 return p->siguiente;}
