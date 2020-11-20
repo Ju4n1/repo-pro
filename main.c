@@ -4,11 +4,8 @@
 #include <string.h>
 #include <unistd.h>
 #include "mapeo.h"
-
-
 #define ABRIR_ARCH_ERROR -1
 #define PROG_INICIA_ERROR -2
-
 void fEliminar(tElemento e){
    e=NULL;
    free(e);
@@ -34,11 +31,8 @@ int fHash(void *c){
     while ((d = *p ++))
         hash += d;
     return fabs(hash);}
-
-
-
 void IngresarArchivo(FILE* f1,tMapeo m){
-    char* pal=malloc(sizeof(char) * 255);
+    char* pal=malloc(sizeof(char) * 80);
     char c;
     int haypalabra=0;
     int i=0;
@@ -46,12 +40,14 @@ void IngresarArchivo(FILE* f1,tMapeo m){
     while(feof(f1)==0){
         c=fgetc(f1);
             if((c>=65 && c<=90)||(c>=97 && c<=122)){
+              //if(c!=9 && c!='\n' && c!=' '){
                 haypalabra=1;
                 pal[i]=c;
                 i++;
                 //printf("%c",c);
             }else{
                 if(haypalabra){
+                    //printf("\n");
                     pal[i]='\0';
                     if(m_recuperar(m,pal)==NULL){
                       //  printf("la palabra no estaba en el mapeo\n");
@@ -79,7 +75,7 @@ void IngresarArchivo(FILE* f1,tMapeo m){
         *(rec)= *(rec)+1;
         m_insertar(m,pal,rec);*/
         if(m_recuperar(m,pal)==NULL){
-            printf("la palabra no estaba en el mapeo\n");
+            //printf("la palabra no estaba en el mapeo\n");
             rec=malloc(sizeof(int));
             *rec=1;
             m_insertar(m,pal,rec);
@@ -135,10 +131,23 @@ void menu(FILE * arch){
                  m_destruir(&m,&fEliminarC,&fEliminarV);
                  printf("%5s","");
                  printf("-Se ha finalizado el evaluador");
-            }
+                 /*//////pruebo el destruir
+                 char* pal2;
+                 for(int i=0;i<10;i++){
+                    pal2=malloc (sizeof(char)*80);
+                    scanf("%s",pal2);
+                    if(m_recuperar(m,pal2)==NULL){
+                        printf("elimino %s bien",pal2);}
+                    else{
+                        printf("no elimino %s",pal2);
+                    }
+                    free(pal2);
+                    }
+                    //////fin de la prueba*/
+                 }
             else{
                 printf("Opcion invalida\n");
-                //sleep(1);
+                sleep(1);
                 system("cls");
 
             }
@@ -146,7 +155,6 @@ void menu(FILE * arch){
 
     }while(opcion!='2');
 }
-/*
 int main(int argc, char *argv[]){
     printf("||#####Bienvenidos al programa evaluador #####||");
     printf("\n");
@@ -165,11 +173,10 @@ int main(int argc, char *argv[]){
         return PROG_INICIA_ERROR;
     }
     return 0;
-}*/
-int main(){
-
+}
+/*int main(){
     FILE* Archivo;
-    Archivo=fopen("f1.txt","r");
+    Archivo=fopen("f2.txt","r");
     menu(Archivo);
     return 0;
-}
+}*/
