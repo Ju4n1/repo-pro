@@ -27,15 +27,15 @@ void crear_lista(tLista * l) {
 **/
 void l_insertar(tLista l, tPosicion p, tElemento e) {
 
-	if (p==NULL) //verifico que tanto la posición como la lista sean válidas, obs se asume que la lista si va a ser válida
+	if (p==NULL) //verifico que tanto la posición sea válida, obs se asume que la lista si va a ser válida
         exit(LST_POSICION_INVALIDA);
 
-    tPosicion posNuevaCelda = (tPosicion) malloc(sizeof(struct celda)); //reservo memoria
+    tPosicion posNuevaCelda = (tPosicion) malloc(sizeof(struct celda)); //reservo la memoria que va a ocupar la nueva posicion
 
-	if (posNuevaCelda == NULL)//verifico que se haya creado bien
+	if (posNuevaCelda == NULL)//verifico que se haya reservado la memoria
         exit(LST_ERROR_MEMORIA);
 
-	//seteo todos los parámetros de la nueva posicion incluyendo referencias al siguiente y del anterior a el
+	//seteo todos los parámetros de la nueva posicion incluyendo la referencia al siguiente y la del anterior hacia a el
     posNuevaCelda->elemento = e;
     posNuevaCelda->siguiente = p->siguiente;
     p->siguiente = posNuevaCelda;
@@ -57,9 +57,9 @@ void l_eliminar(tLista l, tPosicion p, void (*fEliminar)(tElemento)) {
 
     p->siguiente = aux->siguiente; //actualizo el puntero anterior para que apunte al nuevo siguiente
 
-    fEliminar(aux->elemento); //uso la función por parámetero para eliminnar el elemento al que apunta p
+    fEliminar(aux->elemento); //uso la función fEliminar para eliminar el contenido de la posicion
 
-    //eliminos punteros
+    //una vez eliminada la posicion, no debe quedar nada referenciando la misma, ya sea un elemento o una posicion siguiente, por lo que hago nulo los punteros
     aux->elemento=NULL;
     aux->siguiente = NULL;
 
@@ -72,21 +72,25 @@ void l_eliminar(tLista l, tPosicion p, void (*fEliminar)(tElemento)) {
 **/
 void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
 
-    //Me paro en la primer posicion con elemento
+    //Me paro en la posicion que deberia tener elementos en caso de tener
     tPosicion pos = (*l)->siguiente;
-    tPosicion aux=pos;
+    tPosicion aux;
 
 	//recorro la listas mientras tenga elementos
     while(pos!= NULL){
-
-         //elimino elemento y punteros de pos
+         
+		 aux=pos->siguiente;//salvo siguiete para la proxima vuelta del ciclo
+         
+		 //elimino elemento en posicion con la función pasada por parámetros, y hago que sus punteros no apunten a nada
          fEliminar(pos->elemento);
          pos->elemento=NULL;
          pos->siguiente=NULL;
-
-         //Uso aux para avanzar una posicion en la lista y para liberar el espacio que ocupaba la posicion que acabamos de eliminar
-         pos=aux->siguiente;
-         free(aux);}
+         
+		 free(pos);//lebero la memoria que ocupa pos
+         
+		 
+         pos=aux;//actualizo el valor de posicion al siguiente
+         }
 
 
 free(*l); //libero es espacio que ocupa el puntero a lista
@@ -120,7 +124,7 @@ return l;}
 tPosicion l_siguiente(tLista l, tPosicion p) {
 
 
-    if(p==l_fin(l))// no se puede solicitar siguiente a fin, se asume que esta vez la posición pasada es válida para la lista
+    if(p->siguiente==NULL) //esto se cumple cuando p es fin 
         exit(LST_NO_EXISTE_SIGUIENTE);
 
 return p->siguiente;}
@@ -165,7 +169,7 @@ tPosicion l_ultima(tLista l) {
 tPosicion l_fin(tLista l) {
 
       tPosicion pos = l; //pos es primera.
-      while(pos->siguiente!=NULL) //cuando el siguiente de pos es un nulo, esta coincide con fin
+      while(pos->siguiente!=NULL) //cuando el siguiente de pos es un nulo, es porque pos coincide con fin
             pos = pos->siguiente;
 
 return pos;}
@@ -180,7 +184,7 @@ int l_longitud(tLista l) {
     if(l_primera(l) != l_fin(l)) //si la lista tiene elementos los cuento
 
        {
-        tPosicion pos = l->siguiente;
+        tPosicion pos = l->siguiente;//me paro en el primer elemento en caso de tenerlo porque el centinela no se cuenta
         while(pos != NULL){
             pos = pos->siguiente;
             contador++;}
