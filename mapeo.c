@@ -4,19 +4,20 @@
 #include "lista.h"
 #include "mapeo.h"
 
-int (*funcion_hash) (void *);
-int (*funcion_comp)(tClave c1,tClave c2);
+// Funciones que recibo por parámetros y uso en fEliminarEntrada.
 void (*fEliminar_clave)(void *);
 void (*fEliminar_valor)(void *);
 
 /**
  Este eliminar parese redundante, pero se usa en el reHash para poder recurrir al eliminar de lista
  con la tabla hash, destruyendo las celdas pero no su contenido, el cual es reinsertado en la nueva tabla
- de dimensiones apropiadas al factor de escala
+ de dimensiones apropiadas al factor de escala.
 **/
 void fNoEliminar(tElemento e){}
 
-/** Elimina el valor y la clave de una entrada dada, mediante las funciones fEliminar_clave y fEliminar_valor
+/**
+ Elimina el valor y la clave de una entrada dada, mediante las funciones fEliminar_clave y fEliminar_valor.
+ Libera la memoria que ocupa tanto clave como valor.
 **/
 
 void fEliminarEntrada(tElemento e){
@@ -30,8 +31,8 @@ void fEliminarEntrada(tElemento e){
     }
 
 /**
- Funacion max retorna el entero mayor de los dos pasados por parámetros.
- Se usa en crear mapero, para determinar el tamaño inicial de la tabla.
+ Funación max retorna el entero mayor de los dos pasados por parámetros.
+ Se usa en crear mapeo, para determinar el tamaño inicial de la tabla.
 **/
 
     static int max(int x, int y){
@@ -78,6 +79,7 @@ void crear_mapeo(tMapeo * m, int ci, int (*fHash)(void *), int (*fComparacion)(v
 **/
 void reHash(tMapeo m){
 
+
     int long_nueva=m->longitud_tabla*2;
 
     // Reservo la memoria para la tabla, chequeo  dicha reserva y la inicializo la tabla.
@@ -112,8 +114,8 @@ void reHash(tMapeo m){
 
 
     }
-// Elimino la tabla original que no tiene filas y asigno la nueva tabla con su longitud nueva
-m->longitud_tabla*=2;
+// Elimino la tabla original que no tiene filas y asigno la nueva tabla y su longitud nueva.
+m->longitud_tabla=long_nueva;
 free(m->tabla_hash);
 m->tabla_hash=nueva_tabla;
 
@@ -128,6 +130,7 @@ m->tabla_hash=nueva_tabla;
 **/
 
 tValor m_insertar(tMapeo m, tClave c, tValor v){
+
     // Variables de recorrido.
     tEntrada entrada;
     tValor valorRet=NULL;
@@ -154,11 +157,11 @@ tValor m_insertar(tMapeo m, tClave c, tValor v){
                  entrada->valor= v;}
             else
                 posActual= l_siguiente(lista, posActual);
+    }
 
-                }
             if (!encontre){
 
-                 // Reservo la memoria para la nueva entrada, chequeo la operación, seteo clave valor e inserto en tabla incrementando cantiodad elementos
+                 // Reservo la memoria para la nueva entrada, chequeo la operación, seteo clave valor e inserto en tabla incrementando cantiodad elementos.
                  entrada= (tEntrada)malloc(sizeof(struct entrada));
                  if (entrada == NULL)
                      exit(MAP_ERROR_MEMORIA);
@@ -169,7 +172,7 @@ tValor m_insertar(tMapeo m, tClave c, tValor v){
                  l_insertar(lista,l_primera(lista), entrada);
                  m->cantidad_elementos++;
 
-                 // Verifico el factor de carga, el cual me indica si debo agrandar la tabla para que la distribución de entradas por fila sea óptima
+                 // Verifico el factor de carga, el cual indica si debo agrandar la tabla para que la distribución de entradas por fila sea óptima.
                  if(((float)m->cantidad_elementos/(float)m->longitud_tabla) >= 0.75)
                    reHash(m);
 
@@ -180,15 +183,13 @@ return valorRet;}
 
 
 
-
-
 /**
  Elimina la entrada con clave C en M, si esta existe.
  La clave y el valor de la entrada son eliminados mediante las funciones fEliminarC y fEliminarV.
 **/
 void m_eliminar(tMapeo m, tClave c, void (*fEliminarC)(void *), void (*fEliminarV)(void *)){
 
-    // Calculo la fila de la tabla y preparo variables recorrido.
+    // Calculo la fila de la tabla y preparo variables de recorrido.
     int i =m->hash_code(c)%(m->longitud_tabla);
     tLista lista = m->tabla_hash[i];
     tPosicion posActual, posFin;
@@ -198,6 +199,7 @@ void m_eliminar(tMapeo m, tClave c, void (*fEliminarC)(void *), void (*fEliminar
     posActual= l_primera(lista);
     posFin= l_fin(lista);
 
+    // Con esta operación unifico los fEliminarC y fEliminarV en un fEliminarEntrada
     fEliminar_clave = fEliminarC;
     fEliminar_valor= fEliminarV;
 
@@ -210,7 +212,7 @@ void m_eliminar(tMapeo m, tClave c, void (*fEliminarC)(void *), void (*fEliminar
 
               if (m->comparador (c, entrada->clave )== 0)
 
-                   // Encontre la entrada, la elimino con la funacion EliminarEntrada, corto la referencias de punteros, decremento cantidad elemento y salgo del bucle.
+                   // Encontre la entrada, la elimino con la funacion fEliminarEntrada, corto la referencias de punteros, decremento cantidad elemento y salgo del bucle.
                   {l_eliminar(lista, posActual, &fEliminarEntrada);
                    entrada->clave=NULL;
                    entrada->valor=NULL;
@@ -228,8 +230,10 @@ void m_eliminar(tMapeo m, tClave c, void (*fEliminarC)(void *), void (*fEliminar
 **/
 void m_destruir(tMapeo *m, void (*fEliminarC)(void *), void (*fEliminarV)(void *)){
 
+    // Unifico los fEliminarC y fEliminarV en un fEliminarEntrada
     fEliminar_clave = fEliminarC;
     fEliminar_valor = fEliminarV;
+
     tLista bucket;
 
     // Recorro la tabla destruyendo fila por fila y libero el espacio de memoria que esta ocupa.
@@ -243,8 +247,8 @@ void m_destruir(tMapeo *m, void (*fEliminarC)(void *), void (*fEliminarV)(void *
     (*m)->tabla_hash = NULL;
     (*m)->hash_code=NULL;
     (*m)->comparador=NULL;
-    free(*m);//libero memoria que ocupa mapeo
-    *m = NULL;//elimuno el puntero a mapeo
+    free(*m);
+    *m = NULL;
 }
 
 

@@ -8,7 +8,7 @@
 **/
 void crear_lista(tLista * l) {
 
-     // Reservo la memoria de la lista, y compruebo que la operación se haya ralizado sin error.
+     // Reservo la memoria de la lista, y compruebo que la operación se haya realizado sin error.
     (*l) = (tLista) malloc(sizeof(struct celda));
      if ((*l) == NULL)
         exit(LST_ERROR_MEMORIA);
@@ -25,7 +25,7 @@ void crear_lista(tLista * l) {
 **/
 void l_insertar(tLista l, tPosicion p, tElemento e) {
 
-	// Verifico que la posicion sea válida.
+	// Verifico que la posición sea válida, si se asume p siempre válida se puede obviar el chequeo.
 	if (p==NULL)
         exit(LST_POSICION_INVALIDA);
 
@@ -34,7 +34,7 @@ void l_insertar(tLista l, tPosicion p, tElemento e) {
     if (posNuevaCelda == NULL)
         exit(LST_ERROR_MEMORIA);
 
-	// Se asignasn todos los valores correspondientes a la posición nueva.
+	// Se asignan todos los valores correspondientes a la posición nueva.
     posNuevaCelda->elemento = e;
     posNuevaCelda->siguiente = p->siguiente;
     p->siguiente = posNuevaCelda;
@@ -47,7 +47,7 @@ void l_insertar(tLista l, tPosicion p, tElemento e) {
 **/
 void l_eliminar(tLista l, tPosicion p, void (*fEliminar)(tElemento)) {
 
-    // Chequeo posición a eliminar sea válida
+    // Chequeo que posición a eliminar sea válida
     if(p->siguiente==NULL)
           exit(LST_POSICION_INVALIDA);
 
@@ -55,17 +55,18 @@ void l_eliminar(tLista l, tPosicion p, void (*fEliminar)(tElemento)) {
     // Esta es la posición que tengo que eliminar.
     tPosicion aux= p->siguiente;
 
-    // Cambio la referencia de la posicion anterior a la siguiente de p que eliminaré.
+    // Anterior apunta a siguiente de posicion eliminada.
     p->siguiente = aux->siguiente;
 
-    // Elimino el contenido de la posicón con fEliminar corto la referencia al siguiente y libero la memoria por último.
+    // Elimino el contenido de la posicón con fEliminar corto la referencia al siguiente y  por último libero la memoria.
     fEliminar(aux->elemento);
     aux->siguiente = NULL;
     free(aux);
 }
 
 /**
- Destruye la lista L, elimininando cada una de sus posiciones. Los elementos almacenados en las posiciones son eliminados mediante la función fEliminar parametrizada.
+ Destruye la lista L, elimininando cada una de sus posiciones. Los elementos almacenados en las posiciones son eliminados
+ mediante la función fEliminar parametrizada.
 **/
 void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
 
@@ -73,13 +74,13 @@ void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
     tPosicion pos = (*l)->siguiente;
     tPosicion aux;
 
-	// Recorro la listas mientras tenga elementos
+	// Recorro la lista mientras tenga elementos.
     while(pos!= NULL){
 
          // Importante no perder la posición que destruiré en el próximo ciclo.
 		 aux=pos->siguiente;
 
-         // Elimino con la funacion, corto referencias y libero espacio como en eñliminar solo que ciclico.
+         // Elimino con la funacion, corto referencias y libero espacio como en l_eliminar solo que ciclico.
          fEliminar(pos->elemento);
          pos->elemento=NULL;
          pos->siguiente=NULL;
@@ -89,7 +90,7 @@ void l_destruir(tLista * l, void (*fEliminar)(tElemento)){
          pos=aux;
                       }
 
-// Cuando todas la posiciones están destruidar, libero la memeria de lista y corto su referencia.
+// Cuando todas la posiciones están destruidas, libero la memeria de lista y corto su referencia.
 free(*l);
 *l = NULL;
 }
@@ -157,7 +158,7 @@ tPosicion l_ultima(tLista l) {
     // Cuando la lista no está vacia puedo buscar ultima, sino primera=ultima=fin.
     if(l->siguiente!=NULL)
 
-        // Cuando pos siguiente siguiente es nula, significa que estoy en la posicion que apunta a fin, en otras palabras última.
+        // Cuando pos siguiente siguiente es nula, significa que estoy en la posicion que apunta a fin, en otras palabras estoy en última.
         while(((pos->siguiente)->siguiente) != NULL)
               pos = pos->siguiente;
 
@@ -179,7 +180,7 @@ tPosicion l_fin(tLista l) {
 return pos;}
 
 /**
- Metodo que devuelve la longitud de la lista lista.
+ Función que devuelve la longitud de la  lista.
 **/
 int l_longitud(tLista l) {
     // Inicialmente la lista esta vacía.
