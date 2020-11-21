@@ -29,15 +29,16 @@ void fEliminarEntrada(tElemento e){
     entrada= NULL;
     }
 
-    /**
-    Dado dos volores enteros retorna el mayor.
-    **/
+/**
+ Funacion max retorna el entero mayor de los dos pasados por parámetros.
+ Se usa en crear mapero, para determinar el tamaño inicial de la tabla.
+**/
 
     static int max(int x, int y){
     return (x>y) ? x : y;}
 
 /**
- Inicializa un mapeo vac�o, con capacidad inicial igual al MAX(10, CI).
+ Inicializa un mapeo vacío, con capacidad inicial igual al MAX(10, CI).
  Una referencia al mapeo creado es referenciada en *M.
  A todo efecto, el valor hash para las claves ser� computado mediante la funci�n fHash.
  A todo efecto, la comparaci�n de claves se realizar� mediante la funci�n fComparacion.
@@ -53,12 +54,15 @@ void crear_mapeo(tMapeo * m, int ci, int (*fHash)(void *), int (*fComparacion)(v
         if(*m==NULL)
             exit (MAP_ERROR_MEMORIA);
 
-         //creo la tabla y la incializo con filas vacias
+         //Reservo memoria para la tabla, chequeo que se reserve sin error, y la inicializo
          tLista *buckets = (tLista*) malloc(sizeof(tLista) * maximo);
+         if(buckets==NULL)
+             exit (MAP_ERROR_MEMORIA);
+
          for(int i=0;i<maximo;i++)
                crear_lista(&(buckets[i]));
 
-           //asigno valores iniciales al mapeo
+           // Asigno tanto los valores iniciales de mapeo como sus funciones comparar y hash.
           (*m)->tabla_hash= buckets;
           (*m)->cantidad_elementos=0;
           (*m)->longitud_tabla= maximo;
@@ -76,7 +80,7 @@ void reHash(tMapeo m){
 
     int long_nueva=m->longitud_tabla*2;
 
-    //creo nueva tabla y chequeo reserva memoria
+    // Reservo la memoria para la tabla, chequeo  dicha reserva y la inicializo la tabla.
     tLista * nueva_tabla=(tLista*) malloc(sizeof(tLista) * long_nueva);
     if(nueva_tabla==NULL)
        exit(MAP_ERROR_MEMORIA);
@@ -85,31 +89,33 @@ void reHash(tMapeo m){
        crear_lista(&nueva_tabla[i]);//inicializo la tabla vacia
 
 
-    //preparo para recorrer tabla original
+    // Recorro tabla original moviendo las entradas a una tabla nueva.
     tLista* tabla_original=m->tabla_hash;
     tLista lista_actual;
 
-    for(int j=0;j<m->longitud_tabla;j++){ //para cada fila hago
+    for(int j=0;j<m->longitud_tabla;j++){
 
              lista_actual=tabla_original[j];
              tPosicion pos_original=l_primera(lista_actual);
              tPosicion fin=l_fin(lista_actual);
+             tEntrada entrada;
 
-             while(pos_original!=fin){ //copio todas los elementos de la fila en la fila correspondiente de la tabla nueva
-                   tEntrada entrada=(tEntrada)l_recuperar(lista_actual,pos_original);
-                   int h=(m->hash_code(entrada->clave))% long_nueva;
-                   l_insertar(nueva_tabla[h],l_primera(nueva_tabla[h]),entrada);
-                   pos_original=l_siguiente(lista_actual,pos_original);
+             // Copio una fila completa a la tabla nueva y luego destruyo la fila de la tabla original.
+             while(pos_original!=fin){
+                     entrada=(tEntrada)l_recuperar(lista_actual,pos_original);
+                     int h=(m->hash_code(entrada->clave))% long_nueva;
+                     l_insertar(nueva_tabla[h],l_primera(nueva_tabla[h]),entrada);
+                     pos_original=l_siguiente(lista_actual,pos_original);
                                      }
-            l_destruir(&lista_actual,&fNoEliminar);//destruyo la fila copiada
+            l_destruir(&lista_actual,&fNoEliminar);//Destruyo fila, pero no las entradas que contie.
 
 
 
     }
-
-m->longitud_tabla*=2; //altualizo la longitud
-free(m->tabla_hash); //libero espacio ocupado por tabla anterior
-m->tabla_hash=nueva_tabla; //asigno la nueva tabla
+// Elimino la tabla original que no tiene filas y asigno la nueva tabla con su longitud nueva
+m->longitud_tabla*=2;
+free(m->tabla_hash);
+m->tabla_hash=nueva_tabla;
 
 }
 
@@ -122,23 +128,27 @@ m->tabla_hash=nueva_tabla; //asigno la nueva tabla
 **/
 
 tValor m_insertar(tMapeo m, tClave c, tValor v){
+    // Variables de recorrido.
     tEntrada entrada;
     tValor valorRet=NULL;
     tPosicion posActual, posFin;
     int encontre=0;
 
-    //calculo la fila donde voy a insertar
+    // Calculo la fila donde voy a insertar, la recupero.
     int i =m->hash_code(c)%(m->longitud_tabla);
     tLista lista= m->tabla_hash[i];
 
     posActual= l_primera(lista);
     posFin= l_fin(lista);
 
+    // Busco en la fila correspondiente.
     while(!encontre&& posActual!= posFin){
+
             entrada= l_recuperar(lista, posActual);
 
+            // Encontre entrada asi que modifico solo su valor.
             if ( m->comparador(c, entrada->clave) == 0 )
-                {//encontre, modifico el valor existente sin incrementar cantidad de elementos porque reemplacé un valor
+                {
                  encontre=1;
                  valorRet= entrada->valor;
                  entrada->valor= v;}
@@ -148,18 +158,19 @@ tValor m_insertar(tMapeo m, tClave c, tValor v){
                 }
             if (!encontre){
 
-                 //creo y verifico entrada
+                 // Reservo la memoria para la nueva entrada, chequeo la operación, seteo clave valor e inserto en tabla incrementando cantiodad elementos
                  entrada= (tEntrada)malloc(sizeof(struct entrada));
                  if (entrada == NULL)
                      exit(MAP_ERROR_MEMORIA);
 
                  entrada->clave= c;
                  entrada->valor= v;
-                 //inserto la entrada en la tabla y en este caso debo incrementar cantidad de elementos
+
                  l_insertar(lista,l_primera(lista), entrada);
                  m->cantidad_elementos++;
 
-                 if(((float)m->cantidad_elementos/(float)m->longitud_tabla) >= 0.75)//de ser necesario agrando la tabla
+                 // Verifico el factor de carga, el cual me indica si debo agrandar la tabla para que la distribución de entradas por fila sea óptima
+                 if(((float)m->cantidad_elementos/(float)m->longitud_tabla) >= 0.75)
                    reHash(m);
 
             }
@@ -177,7 +188,8 @@ return valorRet;}
 **/
 void m_eliminar(tMapeo m, tClave c, void (*fEliminarC)(void *), void (*fEliminarV)(void *)){
 
-    int i =m->hash_code(c)%(m->longitud_tabla);//calculo la fila en la que voy a eliminar
+    // Calculo la fila de la tabla y preparo variables recorrido.
+    int i =m->hash_code(c)%(m->longitud_tabla);
     tLista lista = m->tabla_hash[i];
     tPosicion posActual, posFin;
     tEntrada entrada;
@@ -189,22 +201,21 @@ void m_eliminar(tMapeo m, tClave c, void (*fEliminarC)(void *), void (*fEliminar
     fEliminar_clave = fEliminarC;
     fEliminar_valor= fEliminarV;
 
-    if(l_longitud(lista)!=0)//si la fila está vacia no puedo recuperar
+    // No es necesario eliminar de una fila vacía.
+    if(l_longitud(lista)!=0)
 
+         //Recorro hasta encontrar o finalizar fila
          while(!encontre&& posActual!= posFin){
               entrada = (tEntrada) l_recuperar(lista, posActual);
 
               if (m->comparador (c, entrada->clave )== 0)
 
-                 {l_eliminar(lista, posActual, &fEliminarEntrada);//elimino de la tabla
-
-                  //elimino punteros
-                  entrada->clave=NULL;
-                  entrada->valor=NULL;
-
-
-                  m->cantidad_elementos--;
-                  encontre=1;} //salgo del ciclo con encontre
+                   // Encontre la entrada, la elimino con la funacion EliminarEntrada, corto la referencias de punteros, decremento cantidad elemento y salgo del bucle.
+                  {l_eliminar(lista, posActual, &fEliminarEntrada);
+                   entrada->clave=NULL;
+                   entrada->valor=NULL;
+                   m->cantidad_elementos--;
+                   encontre=1;}
 
               else
                   posActual= l_siguiente(lista, posActual);}
@@ -221,19 +232,17 @@ void m_destruir(tMapeo *m, void (*fEliminarC)(void *), void (*fEliminarV)(void *
     fEliminar_valor = fEliminarV;
     tLista bucket;
 
+    // Recorro la tabla destruyendo fila por fila y libero el espacio de memoria que esta ocupa.
     for (int i = 0; i < ((*m)->longitud_tabla); i++){
         bucket = ((*m)->tabla_hash[i]);
-        l_destruir(&bucket, &fEliminarEntrada);} //destruyo una a una las filas de la tabla
+        l_destruir(&bucket, &fEliminarEntrada);}
 
-    free(((*m)->tabla_hash));//libero la memoria donde se amlacena la tabla
+    free(((*m)->tabla_hash));
 
-    //Elimino todos los punteros
+    // Corto las referencia de los punteroas de mapeo, libero la memoria que este ocupa, y elimino su puntero.
     (*m)->tabla_hash = NULL;
     (*m)->hash_code=NULL;
     (*m)->comparador=NULL;
-    (*m)->longitud_tabla=NULL;
-    (*m)->cantidad_elementos=NULL;
-
     free(*m);//libero memoria que ocupa mapeo
     *m = NULL;//elimuno el puntero a mapeo
 }
@@ -248,7 +257,7 @@ tValor m_recuperar(tMapeo m, tClave c){
 
     tValor valorRet=NULL;
 
-    //determina la fila en la que corresponde buscar
+    // Determino la fila en la que corresponde buscar y la recupero.
     int i = m->hash_code(c)%(m->longitud_tabla);
     tLista lista = m->tabla_hash[i];
 
@@ -256,24 +265,23 @@ tValor m_recuperar(tMapeo m, tClave c){
     tEntrada entrada=NULL;
     int encontre=0;
 
-   if(l_longitud(lista)!=0)//si la fila está vacia no puedo recuperar
+   // No es necesario recuperar de fila vacía.
+   if(l_longitud(lista)!=0)
+        {
+         posActual=l_primera(lista);
+         posFin=l_fin(lista);
 
-    {
-     posActual=l_primera(lista);
-     posFin=l_fin(lista);
+         // Busco hasta encontrar o agotar elemento de la fila.
+         while(posActual!= posFin&&!encontre){
 
-     while(posActual!= posFin&&!encontre){ //recorro hasta encontrar o llegar al final de la fila
-
-          entrada=(tEntrada)l_recuperar(lista,posActual);
-
-          if  (m->comparador(c, entrada->clave)==0)
-                 {valorRet= entrada->valor;//si encuentro recupero valor
-                  encontre=1;} //uso encontre para salir del ciclo
-            else
-                 posActual= l_siguiente(lista, posActual);} //no encontre sigo buscando.
-     }
+                entrada=(tEntrada)l_recuperar(lista,posActual);
+                if(m->comparador(c, entrada->clave)==0)
+                      {valorRet= entrada->valor;
+                       encontre=1;}
+                else
+                    posActual= l_siguiente(lista, posActual);} //no encontre sigo buscando.
+          }
 
 return valorRet;}
-
 
 
