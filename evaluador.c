@@ -62,7 +62,7 @@ void IngresarArchivo(FILE* f1,tMapeo m){
     int haypalabra=0;
     int* rec;
     while(feof(f1)==0){
-        fscanf(f1,"%s",pal);//almaceno la palabra en pal
+        fscanf(f1,"%s",pal);// Almaceno la palabra en pal.
         if(strlen(pal)>0){
             haypalabra=1;
         }
